@@ -5,6 +5,9 @@ import Data.List
 import Data.Char
 import Data.Maybe
 
+-- |Takes list of streets, inflection table and a document. Returns
+-- sist of possible addresses with itself are lists of possible
+-- parses, and should be tried from left to right.
 listOfCandidates :: [String] -> [(String, [String])] -> String -> [[String]]
 listOfCandidates streets cases s = nub $ 
                                    map toAlternatives $
@@ -13,6 +16,7 @@ listOfCandidates streets cases s = nub $
                                    splitter $
                                    map toLower s
 
+-- |Breaks given string into words
 splitter :: String -> [String]
 splitter x = case break isDelimiter x of
   ([],[])    -> []
@@ -69,6 +73,10 @@ toAlternatives (street,end) = catMaybes [Just street +> number +> house
       (_:a:_) -> justIf (all isAlpha) a
       _       -> Nothing
 
+-- |Checks if the function given as first argument returns true when
+-- applied to the second argument. In that case the value is returned
+-- as wrapped in Just.
+justIf :: (a -> Bool) -> a -> Maybe a
 justIf f a = if f a
              then Just a
              else Nothing
