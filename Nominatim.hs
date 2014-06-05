@@ -7,6 +7,7 @@ module Nominatim where
 import Control.Monad
 import Control.Applicative
 import Data.Aeson
+import Data.Binary (Binary,get,put)
 import Data.Maybe
 import Network.URL
 import Network.Curl.Aeson
@@ -36,10 +37,17 @@ instance ToJSON Location where
                                ,"type" .= coordType
                                ]
 
+instance Binary Location where
+    put Location{..} = do
+      put name
+      put coordType
+      put $ encode coords
+    get = Location <$> get <*> get <*> ((fromJust.decode) <$> get)
+
 Just baseUrl = importURL "http://nominatim.openstreetmap.org/search?format=jsonv2&polygon_geojson=1&limit=1"
 
-search :: String -> String -> String -> IO (Maybe Location)
-search country city street = listToMaybe <$> curlAesonGet url
+search :: (String,String,String) -> IO (Maybe Location)
+search (country,city,street) = listToMaybe <$> curlAesonGet url
   where
     url = exportURL $ baseUrl &>
           ("country",country) &> ("city",city) &> ("street",street)

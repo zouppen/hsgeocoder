@@ -20,6 +20,7 @@ import Text.HTML.TagSoup
 import Nominatim
 import AddressExtractor
 import DeclinationReader
+import Cache
 
 main = do
     let port = 3000
@@ -31,11 +32,11 @@ main = do
 app :: ([(String, [String])], [String]) -> Application
 app (inflections,streets) req = case (requestMethod req,pathInfo req) of
   ("GET",["nominative",area,street]) -> do
-    locations <- liftIO $ search "Finland" "Jyväskylä" $ T.unpack street
+    locations <- liftIO $ cachedSearch "Finland" "Jyväskylä" $ T.unpack street
     jsonResponse $ encode locations
   ("GET",["inflected",area,street]) -> do
     let nominative = toNominative inflections $ T.unpack street
-    locations <- liftIO $ search "Finland" "Jyväskylä" nominative
+    locations <- liftIO $ cachedSearch "Finland" "Jyväskylä" nominative
     jsonResponse $ encode locations
   ("POST",["document","text",area]) -> do
     doc <- requestBody req =$= CT.decode CT.utf8 $$ foldMap T.unpack
@@ -50,8 +51,10 @@ app (inflections,streets) req = case (requestMethod req,pathInfo req) of
   where 
     docSearch s = do
       let candidates = listOfCandidates streets inflections s
-      answers <- liftIO $ mapM (search "Finland" "Jyväskylä") candidates
+      answers <- liftIO $ mapM (cachedSearch "Finland" "Jyväskylä") candidates
       jsonResponse $ encode $ nub $ catMaybes answers
+
+cachedSearch country city street = viaCache search (country,city,street)
 
 bad,good :: Monad m => ByteString -> m Response
 bad  = textualResponse badRequest400 
@@ -68,5 +71,5 @@ jsonResponse x = return $
                  x
 
 searchJson country city street = do
-  locations <- search country city street
+  locations <- cachedSearch country city street
   return $ encode locations
