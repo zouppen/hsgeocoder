@@ -11,9 +11,10 @@ import System.IO.Error
 -- returned from there. Otherwise the action is performed for
 -- real. The cache is a flat directory where older objects may freely
 -- be purged by hand.
-viaCache :: (Binary a, Binary b) => (a -> IO b) -> a -> IO b
+viaCache :: (Show a, Binary a, Binary b) => (a -> IO b) -> a -> IO b
 viaCache act key = do 
   mbHit <- lookup
+  putStrLn $ (maybe "MISS" (const "HIT") mbHit) ++ " " ++ show key
   case mbHit of
     Nothing -> do
       value <- act key
