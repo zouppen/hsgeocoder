@@ -26,7 +26,17 @@ splitter x = case break isDelimiter x of
 
 -- |Returns true if it is a word delimiter.
 isDelimiter :: Char -> Bool
-isDelimiter x = isSpace x || x `elem` ".,"
+isDelimiter x = case x of 
+  '.'    -> True
+  ','    -> True
+  ' '    -> True
+  '\160' -> True -- NBSP
+  '\t'   -> True
+  '\n'   -> True 
+  '\r'   -> True
+  '\f'   -> True
+  '\v'   -> True
+  _      -> False
 
 -- |Takes a word (possibly a compound word), nominative ending and an
 -- inflected case of that word. It returns Just x if the word was
