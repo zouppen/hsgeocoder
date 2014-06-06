@@ -18,11 +18,9 @@ listOfCandidates streets cases s = nub $
 
 -- |Breaks given string into words
 splitter :: String -> [String]
-splitter x = case break isDelimiter x of
-  ([],[])    -> []
-  ([],(_:b)) -> splitter b
-  (a,[])     -> [a]
-  (a,(_:b))  -> a:splitter b
+splitter = unfoldr f
+  where f [] = Nothing
+        f x  = Just $ break isDelimiter $ dropWhile isDelimiter x
 
 -- |Returns true if it is a word delimiter.
 isDelimiter :: Char -> Bool
